@@ -1,0 +1,35 @@
+# Blueprint do Render (https://render.com/docs/blueprint-spec) para deploy contínuo a partir do GitHub.
+# Ao conectar este repositório no Render (New > Blueprint), a API e o PostgreSQL abaixo são criados
+# automaticamente e já conectados entre si, com deploy automático a cada push na branch configurada.
+databases:
+  - name: devshowcase-db
+    databaseName: devshowcase
+    plan: free
+    region: oregon
+    postgresMajorVersion: "17"
+
+services:
+  - type: web
+    name: devshowcase-api
+    runtime: docker
+    plan: free
+    region: oregon
+    branch: main
+    autoDeploy: true
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: production
+      - key: DB_SSL
+        value: "true"
+      # DATABASE_URL: preenchida automaticamente pelo Render com a connection string do banco
+      # "devshowcase-db" definido acima (fromDatabase). Um EnvironmentPostProcessor Spring Boot
+      # (com.devshowcase.api.config.DatabaseUrlEnvironmentPostProcessor) converte essa URL para
+      # spring.datasource.url/username/password na inicialização, assim como o config/database.js
+      # original fazia via Sequelize. Para usar Supabase em vez do Render PostgreSQL, troque este
+      # bloco por "sync: false" e defina o valor manualmente no dashboard.
+      - key: DATABASE_URL
+        fromDatabase:
+          name: devshowcase-db
+          property: connectionString
