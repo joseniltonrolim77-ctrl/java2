@@ -1,0 +1,2 @@
+org.springframework.boot.env.EnvironmentPostProcessor=\
+com.devshowcase.api.config.DatabaseUrlEnvironmentPostProcessor

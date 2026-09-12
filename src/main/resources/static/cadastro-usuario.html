@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DevShowcase — Cadastro de usuário</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --border: #334155;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --primary: #6366f1;
+    --primary-hover: #4f46e5;
+    --success: #22c55e;
+    --error: #ef4444;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 460px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  }
+
+  h1 {
+    margin: 0 0 4px;
+    font-size: 1.5rem;
+  }
+
+  .subtitle {
+    margin: 0 0 24px;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+    margin-top: 16px;
+  }
+
+  label .optional {
+    font-weight: 400;
+    color: var(--muted);
+  }
+
+  input, textarea {
+    width: 100%;
+    padding: 10px 12px;
+    background: #0f172a;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 0.95rem;
+    font-family: inherit;
+  }
+
+  input:focus, textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+
+  button {
+    width: 100%;
+    margin-top: 24px;
+    padding: 12px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  button:hover:not(:disabled) {
+    background: var(--primary-hover);
+  }
+
+  button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .message {
+    margin-top: 16px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    display: none;
+  }
+
+  .message.success {
+    display: block;
+    background: rgba(34, 197, 94, 0.12);
+    border: 1px solid var(--success);
+    color: #86efac;
+  }
+
+  .message.error {
+    display: block;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid var(--error);
+    color: #fca5a5;
+  }
+
+  .message ul {
+    margin: 6px 0 0;
+    padding-left: 18px;
+  }
+
+  .field-error {
+    color: var(--error);
+    font-size: 0.8rem;
+    margin-top: 4px;
+    display: none;
+  }
+
+  footer {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  footer a {
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>Cadastro de usuário</h1>
+    <p class="subtitle">Crie seu perfil de desenvolvedor no DevShowcase.</p>
+
+    <form id="form-cadastro" novalidate>
+      <label for="name">Nome</label>
+      <input type="text" id="name" name="name" maxlength="120" required />
+      <div class="field-error" id="error-name"></div>
+
+      <label for="email">E-mail</label>
+      <input type="email" id="email" name="email" required />
+      <div class="field-error" id="error-email"></div>
+
+      <label for="bio">Bio <span class="optional">(opcional)</span></label>
+      <textarea id="bio" name="bio" maxlength="1000" placeholder="Conte um pouco sobre você"></textarea>
+      <div class="field-error" id="error-bio"></div>
+
+      <label for="avatarUrl">URL do avatar <span class="optional">(opcional)</span></label>
+      <input type="url" id="avatarUrl" name="avatarUrl" placeholder="https://exemplo.com/avatar.png" />
+      <div class="field-error" id="error-avatarUrl"></div>
+
+      <button type="submit" id="submit-btn">Cadastrar</button>
+
+      <div class="message" id="message"></div>
+    </form>
+
+    <footer>
+      API de produção: <a href="https://devshowcase-api-nldk.onrender.com/api/docs" target="_blank" rel="noopener">devshowcase-api-nldk.onrender.com</a>
+    </footer>
+  </div>
+
+  <script>
+    const API_BASE_URL = 'https://devshowcase-api-nldk.onrender.com';
+
+    const form = document.getElementById('form-cadastro');
+    const submitBtn = document.getElementById('submit-btn');
+    const messageBox = document.getElementById('message');
+
+    function clearFieldErrors() {
+      document.querySelectorAll('.field-error').forEach((el) => {
+        el.style.display = 'none';
+        el.textContent = '';
+      });
+    }
+
+    function showFieldError(field, text) {
+      const el = document.getElementById(`error-${field}`);
+      if (el) {
+        el.textContent = text;
+        el.style.display = 'block';
+      }
+    }
+
+    function showMessage(type, text, extraItems) {
+      messageBox.className = `message ${type}`;
+      messageBox.innerHTML = `<div>${text}</div>`;
+      if (extraItems && extraItems.length) {
+        const ul = document.createElement('ul');
+        extraItems.forEach((item) => {
+          const li = document.createElement('li');
+          li.textContent = item;
+          ul.appendChild(li);
+        });
+        messageBox.appendChild(ul);
+      }
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      clearFieldErrors();
+      messageBox.className = 'message';
+      messageBox.innerHTML = '';
+
+      const payload = {
+        name: document.getElementById('name').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        bio: document.getElementById('bio').value.trim() || undefined,
+        avatarUrl: document.getElementById('avatarUrl').value.trim() || undefined,
+      };
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Enviando...';
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/profiles`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await response.json().catch(() => ({}));
+
+        if (response.ok) {
+          showMessage('success', `Perfil criado com sucesso! ID: ${data.id ?? '—'}`);
+          form.reset();
+          return;
+        }
+
+        // Erros de validação (400) trazem "errors" com mensagens por campo,
+        // outros erros (404/409/500) trazem apenas "message".
+        if (Array.isArray(data.errors) && data.errors.length) {
+          data.errors.forEach((err) => {
+            if (typeof err === 'string') {
+              const match = err.match(/^"?(\w+)"?/);
+              if (match) showFieldError(match[1], err);
+            } else if (err && err.field) {
+              showFieldError(err.field, err.message || err.defaultMessage || 'Valor inválido.');
+            }
+          });
+          showMessage('error', data.message || 'Erro de validação.', data.errors.map((e) => (typeof e === 'string' ? e : e.message)));
+        } else {
+          showMessage('error', data.message || 'Não foi possível concluir o cadastro. Tente novamente.');
+        }
+      } catch (err) {
+        showMessage(
+          'error',
+          'Não foi possível conectar à API. Se o serviço estiver inativo (plano Free do Render), a primeira requisição pode levar até ~30s — tente novamente em instantes.'
+        );
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Cadastrar';
+      }
+    });
+  </script>
+</body>
+</html>
